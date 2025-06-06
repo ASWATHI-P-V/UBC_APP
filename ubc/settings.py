@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'accounts',
+    'media_management',
 
 ]
 
@@ -72,15 +73,25 @@ TEMPLATES = [
 WSGI_APPLICATION = 'ubc.wsgi.application'
 
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'OPTIONS': {
+#             'read_default_file': '/home/ebs15/Documents/EBS/venv/UBC/ubc/my.cnf',
+#         },
+#     }
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'OPTIONS': {
-            'read_default_file': '/home/ebs15/Documents/EBS/venv/UBC/ubc/my.cnf',
-        },
+        'NAME': 'ubc_db',
+        'USER': 'root',
+        'PASSWORD': 'Pass@123',
+        'HOST': 'localhost',
+        'PORT': '3306',
     }
 }
-
 
 
 
