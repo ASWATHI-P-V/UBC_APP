@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'accounts',
     'media_management',
+    'category',
+    'django_filters',
 
 ]
 

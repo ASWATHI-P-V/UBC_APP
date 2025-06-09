@@ -60,7 +60,7 @@ class ImageDetailView(APIView):
             data=serializer.data
         )
     
-    def patch(self, request, image_id):
+    def put(self, request, image_id):
         """Update image metadata (title, description)"""
         image = get_object_or_404(ImageUpload, id=image_id, user=request.user)
         serializer = ImageUploadSerializer(image, data=request.data, partial=True)

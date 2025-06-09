@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
+from category.models import Category
 
 
 class UserManager(BaseUserManager):
@@ -45,7 +46,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='individual')
 
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
-    category = models.TextField(null=True, blank=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
     enable_designation_and_company_name = models.BooleanField(default=False,null=True, blank=True)
     designation = models.CharField(max_length=100, null=True, blank=True)
     about = models.TextField(null=True, blank=True)

@@ -4,6 +4,7 @@ import phonenumbers
 from .models import User
 from media_management.models import ImageUpload
 from media_management.serializers import ImageUploadSerializer
+from category.models import Category
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -48,8 +49,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), required=False
+    )
     image_file = serializers.ImageField(write_only=True, required=False)
-    uploaded_images = ImageUploadSerializer(many=True, read_only=True)
+    
 
     class Meta:
         model = User
@@ -57,7 +61,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             'name', 'mobile_number', 'address', 'role', 'profile_picture', 'category',
             'designation', 'about', 'enable_designation_and_company_name', 'business_name',
             'company_name', 'logo',
-            'image_file', 'uploaded_images'
+            'image_file'
         ]
 
     def validate(self, attrs):

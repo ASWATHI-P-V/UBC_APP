@@ -35,7 +35,7 @@ class RequestPhoneOTP(APIView):
         user.save()
 
         print(f"[DEBUG] OTP for {mobile_number}: {otp}")
-        return api_response(True, "OTP sent to mobile number", data={"otp": otp})
+        return api_response(True, "OTP sent sucesssfully to mobile number", data={"otp": otp})
 
 
 # Verify Login OTP
@@ -135,7 +135,7 @@ class FinalizeSignup(APIView):
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def patch(self, request):
+    def put(self, request):
         user = request.user
         serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
 

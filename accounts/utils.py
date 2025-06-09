@@ -2,6 +2,16 @@ import random
 import phonenumbers
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.response import Response
+from rest_framework import status
+
+def api_response(success, message, data=None, status_code=status.HTTP_200_OK):
+    return Response({
+        "success": success,
+        "message": message,
+        "data": data
+    }, status=status_code)
+
 
 def generate_otp():
     return str(random.randint(1000, 9999))
