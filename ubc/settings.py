@@ -42,6 +42,9 @@ INSTALLED_APPS = [
     'media_management',
     'category',
     'django_filters',
+    'social',
+    'services',
+    'theme'
 
 ]
 

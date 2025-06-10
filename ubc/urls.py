@@ -8,6 +8,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('accounts.urls')),
     path('api/category/', include('category.urls')),
+    path('api/social/', include('social.urls')),
+    path('api/services/', include('services.urls')),
+    path('api/theme/', include('theme.urls')),
     path('', lambda request: redirect('/admin/')),
 ]
 if settings.DEBUG:
