@@ -35,6 +35,30 @@ class ServiceListCreateView(generics.ListCreateAPIView):
         serializer.save(user=self.request.user)
 
 
+class ServiceUpdateView(generics.UpdateAPIView):
+    serializer_class = ServiceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.services.all()
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return api_response(
+            success=True,
+            message="Service updated successfully.",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
+
+    def perform_update(self, serializer):
+        serializer.save()
+
+
 class ServiceDeleteView(generics.DestroyAPIView):
     serializer_class = ServiceSerializer
     permission_classes = [permissions.IsAuthenticated]

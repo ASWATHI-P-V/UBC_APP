@@ -61,7 +61,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             'name', 'mobile_number', 'address', 'role', 'profile_picture', 'category',
             'designation', 'about', 'enable_designation_and_company_name', 'business_name',
             'company_name', 'logo',
-            'image_file'
+            'image_file', 'profile_views'
         ]
 
     def validate(self, attrs):

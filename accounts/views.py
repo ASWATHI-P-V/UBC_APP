@@ -1,11 +1,14 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import User
+from .models import User,ProfileViewRecord
 from .utils import generate_otp, get_tokens_for_user
 from django.utils import timezone
 from .serializers import UserSerializer, UserProfileUpdateSerializer
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics
+from rest_framework import permissions
+from rest_framework.views import APIView
 
 
 def api_response(success, message, data=None, status_code=status.HTTP_200_OK):
@@ -135,6 +138,16 @@ class FinalizeSignup(APIView):
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        user = request.user
+        serializer = UserProfileUpdateSerializer(user)
+        return api_response(
+            success=True,
+            message="Profile fetched successfully",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
+
     def put(self, request):
         user = request.user
         serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
@@ -155,3 +168,32 @@ class ProfileView(APIView):
             status_code=status.HTTP_400_BAD_REQUEST
         )
         
+
+class ProfileDetailView(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserProfileUpdateSerializer
+    permission_classes = [permissions.IsAuthenticated]  # Or allow any if public
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        if request.user != instance:
+            # Check if the view is unique
+            already_viewed = ProfileViewRecord.objects.filter(
+                profile_owner=instance,
+                viewer=request.user
+            ).exists()
+
+            if not already_viewed:
+                # Create a record and increment unique view count
+                ProfileViewRecord.objects.create(profile_owner=instance, viewer=request.user)
+                instance.profile_views = (instance.profile_views or 0) + 1
+                instance.save(update_fields=["profile_views"])
+
+        serializer = self.get_serializer(instance)
+        return api_response(
+            success=True,
+            message="Profile fetched successfully.",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )

@@ -54,7 +54,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     business_name = models.CharField(max_length=255, null=True, blank=True)
     company_name = models.CharField(max_length=255, null=True, blank=True)
     logo = models.ImageField(upload_to='logos/', null=True, blank=True)
-
+    profile_views = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
@@ -71,4 +71,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.mobile_number} - {self.name or 'Unregistered'}"
 
+
+class ProfileViewRecord(models.Model):
+    profile_owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='viewers')
+    viewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='viewed_profiles')
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('profile_owner', 'viewer')  # One view per viewer per profile
+
+    def __str__(self):
+        return f"{self.viewer} viewed {self.profile_owner}"
 
