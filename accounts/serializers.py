@@ -11,6 +11,19 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'name', 'email', 'mobile_number', 'country_code', 'is_whatsapp']
     
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+
+        # Strip country code prefix from mobile_number for output only
+        mobile = rep.get("mobile_number")
+        country_code = rep.get("country_code")
+
+        if mobile and country_code and mobile.startswith(country_code):
+            rep["mobile_number"] = mobile[len(country_code):]
+
+        return rep
+
+
     def validate(self, attrs):
         mobile_number = attrs.get('mobile_number')
         country_code = attrs.get('country_code')
@@ -21,7 +34,7 @@ class UserSerializer(serializers.ModelSerializer):
                 parsed = phonenumbers.parse(mobile_number, None)
                 if phonenumbers.is_valid_number(parsed):
                     # Phone is already formatted, just ensure country_code matches
-                    attrs['mobile_number'] = mobile_number
+                    attrs['mobile_number'] = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
                     attrs['country_code'] = f"+{parsed.country_code}"
                     return attrs
             except phonenumbers.NumberParseException:

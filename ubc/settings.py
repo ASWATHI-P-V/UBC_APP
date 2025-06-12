@@ -31,6 +31,8 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
+    # 'grappelli',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -158,3 +160,69 @@ AUTH_USER_MODEL = 'accounts.User'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+
+STATICFILES_DIRS = [BASE_DIR / "static"]
+# STATIC_ROOT = BASE_DIR / "staticfiles"
+
+
+
+JAZZMIN_SETTINGS = {
+    "site_title": "UBC Admin",
+    "site_header": "UBC Admin",
+    "site_brand": "UBC",
+    "site_logo": "accounts/img/logo1.jpg",
+    "site_icon": "accounts/img/admin.jpg",
+    "welcome_sign": "Welcome to UBC Admin",
+    "copyright": "UBC Inc.",
+    "search_model": ["accounts.User"],
+
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+    "order_with_respect_to": ["accounts", "category", "media_management", "social", "theme"],
+
+    "icons": {
+        "accounts": "fas fa-id-badge",
+        "accounts.User": "fas fa-user-circle",
+        "accounts.ProfileViewRecord": "fas fa-eye",
+        "category": "fas fa-layer-group",
+        "category.Category": "fas fa-list-alt",
+        "media_management": "fas fa-photo-video",
+        "media_management.ImageUpload": "fas fa-upload",
+        "social": "fas fa-share-nodes",
+        "social.SocialMediaLink": "fab fa-facebook-messenger",
+        "social.SocialMediaPlatform": "fas fa-globe",
+        "theme": "fas fa-fill-drip",
+        "theme.Theme": "fas fa-brush",
+    },
+
+    # "topmenu_links": [
+    #     {"name": "Dashboard",  "url": "/admin", "permissions": ["auth.view_user"]},
+    #     {"app": "accounts"},
+    #     {"app": "category"},
+    #     {"app": "media_management"},
+    #     {"app": "social"},
+    #     {"app": "theme"},
+    # ],
+
+    # "custom_links": {
+    #     "accounts": [{
+    #         "name": "Google",
+    #         "url": "https://google.com",
+    #         "icon": "fas fa-link",
+    #         "permissions": ["auth.view_user"]
+    #     }]
+    # },
+
+    "changeform_format": "horizontal_tabs",  # tabbed sections like Strapi
+    "changeform_format_overrides": {
+        "accounts.User": "horizontal_tabs",
+        "category.Category": "collapsible",
+    },
+
+    "related_modal_active": True,  # Show related (add/edit) as modals
+    "theme": "darkly",  # Dark theme like Strapi
+    "show_ui_builder": False,  # Disable live builder in production
+}
+
