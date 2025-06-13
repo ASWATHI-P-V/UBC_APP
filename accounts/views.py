@@ -94,8 +94,6 @@ class SignupRequest(APIView):
         print(f"[DEBUG] Signup OTP for {mobile_number}: {otp}")
         return api_response(True, "OTP sent for verification", data={"otp": otp})
 
-
-# Finalize Signup
 class FinalizeSignup(APIView):
     def post(self, request):
         otp_input = request.data.get("otp")
@@ -103,7 +101,8 @@ class FinalizeSignup(APIView):
         otp_sent = request.session.get("signup_otp")
         otp_time_str = request.session.get("signup_otp_time")
 
-        if not signup_data or not otp_sent or not otp_time_str:
+        print(f"[DEBUG] OTP input: {otp_input}, OTP sent: {otp_sent}, Signup data: {signup_data}")
+        if not otp_sent or not otp_time_str:
             return api_response(False, "Signup session expired or invalid", status_code=400)
 
         if otp_input != otp_sent:
@@ -119,6 +118,7 @@ class FinalizeSignup(APIView):
 
         user = User.objects.create(**serializer.validated_data)
 
+        # Clear session
         for key in ["signup_data", "signup_otp", "signup_otp_time"]:
             request.session.pop(key, None)
 
@@ -129,10 +129,10 @@ class FinalizeSignup(APIView):
 
         return api_response(True, "User registered successfully", data={
             "access": tokens["access"],
-            #"token": tokens["refresh"],
-            "user": user_data
+            "user": user_data,
+            "mobile_number": user.mobile_number,
+            "country_code": user.country_code,
         })
-
 
 # Profile Update View
 class ProfileView(APIView):

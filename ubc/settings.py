@@ -176,7 +176,7 @@ JAZZMIN_SETTINGS = {
     "welcome_sign": "Welcome to UBC Admin",
     "copyright": "UBC Inc.",
     "search_model": ["accounts.User"],
-
+    "theme": "darkly",
     "navigation_expanded": True,
     "hide_apps": [],
     "hide_models": [],
@@ -222,7 +222,8 @@ JAZZMIN_SETTINGS = {
     },
 
     "related_modal_active": True,  # Show related (add/edit) as modals
-    "theme": "darkly",  # Dark theme like Strapi
+    # "theme": "darkly",  # Dark theme like Strapi
+    # "theme": "slate",
     "show_ui_builder": False,  # Disable live builder in production
 }
 

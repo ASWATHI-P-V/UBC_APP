@@ -5,6 +5,7 @@ from .models import User
 from media_management.models import ImageUpload
 from media_management.serializers import ImageUploadSerializer
 from category.models import Category
+from category.serializers import CategorySerializer
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -62,20 +63,27 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
-    category = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(), required=False
+    category_id = serializers.PrimaryKeyRelatedField(
+        source='category',
+        queryset=Category.objects.all(),
+        write_only=True,
+        required=False
     )
+    category = CategorySerializer(read_only=True)
     image_file = serializers.ImageField(write_only=True, required=False)
     
 
     class Meta:
         model = User
         fields = [
-            'name', 'mobile_number', 'address', 'role', 'profile_picture', 'category',
+            'name', 'mobile_number', 'address', 'role', 'profile_picture', 'category','category_id',   # for input
             'designation', 'about', 'enable_designation_and_company_name', 'business_name',
             'company_name', 'logo',
             'image_file', 'profile_views'
         ]
+        extra_kwargs = {
+            'category_id': {'write_only': True},
+        }
 
     def validate(self, attrs):
         role = attrs.get('role', None)
