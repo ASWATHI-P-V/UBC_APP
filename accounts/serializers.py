@@ -71,7 +71,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     )
     category = CategorySerializer(read_only=True)
     image_file = serializers.ImageField(write_only=True, required=False)
-    
+    profileupdate_completed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
@@ -79,11 +79,24 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             'name', 'mobile_number', 'address', 'role', 'profile_picture', 'category','category_id',   # for input
             'designation', 'about', 'enable_designation_and_company_name', 'business_name',
             'company_name', 'logo',
-            'image_file', 'profile_views'
+            'image_file', 'profile_views','profileupdate_completed'  
         ]
         extra_kwargs = {
             'category_id': {'write_only': True},
         }
+    def get_profileupdate_completed(self, obj):
+        # Required fields for all users
+        required_fields = ['name', 'mobile_number', 'address', 'role', 'profile_picture', 'category']
+
+        # Additional fields required if role is 'business'
+        if obj.role == 'business':
+            required_fields += ['business_name', 'logo']
+
+        for field in required_fields:
+            value = getattr(obj, field, None)
+            if not value:
+                return False
+        return True
 
     def validate(self, attrs):
         role = attrs.get('role', None)

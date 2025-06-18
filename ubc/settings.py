@@ -158,12 +158,23 @@ SIMPLE_JWT = {
 AUTH_USER_MODEL = 'accounts.User'
 
 
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",  # Dev only (not shared across processes)
+        "LOCATION": "unique-signup-cache",
+    }
+}
+
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
 STATICFILES_DIRS = [BASE_DIR / "static"]
 # STATIC_ROOT = BASE_DIR / "staticfiles"
+
+
 
 
 

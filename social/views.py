@@ -3,7 +3,7 @@ from .models import SocialMediaLink, SocialMediaPlatform
 from .serializers import SocialMediaLinkSerializer, SocialMediaPlatformSerializer
 from accounts.utils import api_response
 from rest_framework import status
-
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 class SocialMediaLinkListCreateView(generics.ListCreateAPIView):
@@ -16,22 +16,13 @@ class SocialMediaLinkListCreateView(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
-        return api_response(
-            success=True,
-            message="Social media links fetched successfully.",
-            data=serializer.data
-        )
+        return api_response(True,"Social media links fetched successfully.",serializer.data)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-        return api_response(
-            success=True,
-            message="Social media link created successfully.",
-            data=serializer.data,
-            status_code=status.HTTP_201_CREATED
-        )
+        return api_response(True,"Social media link created successfully.",serializer.data,status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -43,15 +34,21 @@ class SocialMediaLinkDeleteView(generics.DestroyAPIView):
 
     def get_queryset(self):
         return self.request.user.social_links.all()
-
+    
     def destroy(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        print("[DEBUG] Deleting SocialMediaLink ID:", pk)
+        print("[DEBUG] User's Links:", self.get_queryset().values_list('id', flat=True))
+
         instance = self.get_object()
         self.perform_destroy(instance)
-        return api_response(
-            success=True,
-            message="Social media deleted successfully.",
-            data=None
-        )
+        return api_response(True, "Social media deleted successfully.", None)
+
+
+    # def destroy(self, request, *args, **kwargs):
+    #     instance = self.get_object()
+    #     self.perform_destroy(instance)
+    #     return api_response(True,"Social media deleted successfully.",None)
 
 
 class SocialMediaPlatformCreateView(generics.CreateAPIView):
@@ -61,11 +58,11 @@ class SocialMediaPlatformCreateView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return api_response(False,"social media platform with this name already exists.",None,status.HTTP_400_BAD_REQUEST)
         self.perform_create(serializer)
-        return api_response(
-            success=True,
-            message="Social media platform created successfully.",
-            data=serializer.data,
-            status_code=status.HTTP_201_CREATED
-        )
+        return api_response(True,"Social media platform created successfully.",serializer.data,status.HTTP_201_CREATED)
+       
+

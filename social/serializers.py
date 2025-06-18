@@ -16,7 +16,7 @@ class SocialMediaLinkSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SocialMediaLink
-        fields = ['id', 'user', 'platform', 'platform_id', 'data']
+        fields = ['id', 'user', 'platform', 'platform_id', 'platform_url']
         read_only_fields = ['user']
 
     def create(self, validated_data):

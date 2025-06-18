@@ -8,8 +8,10 @@ from .serializers import UserSerializer, UserProfileUpdateSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
 from rest_framework import permissions
-from rest_framework.views import APIView
-
+from phonenumbers import parse, is_valid_number, format_number, PhoneNumberFormat, NumberParseException
+from django.core.cache import cache
+from rest_framework import status
+from accounts.utils import api_response
 
 def api_response(success, message, data=None, status_code=status.HTTP_200_OK):
     return Response({
@@ -67,72 +69,165 @@ class VerifyPhoneOTP(APIView):
 
         return api_response(False, "Invalid or expired OTP", status_code=400)
 
-
-# Collect Signup Data and Send OTP
+        
 class SignupRequest(APIView):
     def post(self, request):
-        serializer = UserSerializer(data=request.data)
-        if not serializer.is_valid():
-            return api_response(False, "Validation error", data=serializer.errors, status_code=400)
+        data = request.data
 
-        data = serializer.validated_data
-        mobile_number = data.get('mobile_number')
-        email = data.get('email')
+        mobile_number = data.get("mobile_number")
+        email = data.get("email")
 
-        if User.objects.filter(mobile_number=mobile_number).exists():
-            return api_response(False, "Mobile number already registered", status_code=400)
+        # Check for duplicate mobile/email BEFORE serializer.is_valid()
+        if mobile_number and User.objects.filter(mobile_number=mobile_number).exists():
+            return api_response(False, "Mobile number already registered", data=None, status_code=400)
 
         if email and User.objects.filter(email=email).exists():
-            return api_response(False, "Email already registered", status_code=400)
+            return api_response(False, "Email already registered", data=None, status_code=400)
 
-        otp = generate_otp()
+        serializer = UserSerializer(data=data)
+        if not serializer.is_valid():
+            return api_response(False, "Validation error", data=None, status_code=400)
 
-        request.session["signup_data"] = data
-        request.session["signup_otp"] = otp
-        request.session["signup_otp_time"] = timezone.now().isoformat()
+        try:
+            data = serializer.validated_data
+            mobile_number = data.get('mobile_number')  # Already formatted to E.164 in serializer
 
-        print(f"[DEBUG] Signup OTP for {mobile_number}: {otp}")
-        return api_response(True, "OTP sent for verification", data={"otp": otp})
+            otp = generate_otp()
+            cache_key = f"signup_otp:{mobile_number}"
+            print(f"[DEBUG] SignupRequest cache key: {cache_key}, otp: {otp}")
+
+            cache.set(cache_key, {
+                "otp": otp,
+                "signup_data": data,
+                "created_at": timezone.now().isoformat()
+            }, timeout=300)  # 5 minutes
+
+            return api_response(True, "OTP sent for verification", data={"otp": otp})
+
+        except Exception as e:
+            print(f"[ERROR] SignupRequest failed: {str(e)}")
+            return api_response(False, "Internal server error", data=None, status_code=500)
+
+
+
 
 class FinalizeSignup(APIView):
     def post(self, request):
         otp_input = request.data.get("otp")
-        signup_data = request.session.get("signup_data")
-        otp_sent = request.session.get("signup_otp")
-        otp_time_str = request.session.get("signup_otp_time")
+        mobile_number_raw = request.data.get("mobile_number")
+        country_code = request.data.get("country_code")
 
-        print(f"[DEBUG] OTP input: {otp_input}, OTP sent: {otp_sent}, Signup data: {signup_data}")
-        if not otp_sent or not otp_time_str:
-            return api_response(False, "Signup session expired or invalid", status_code=400)
+        if not mobile_number_raw or not country_code:
+            return api_response(False, "Mobile number and country code are required.", status_code=400)
 
-        if otp_input != otp_sent:
+        # Normalize to E.164 format
+        try:
+            parsed = parse(f"{country_code}{mobile_number_raw}", None)
+            if not is_valid_number(parsed):
+                return api_response(False, "Invalid mobile number", status_code=400)
+            mobile_number = format_number(parsed, PhoneNumberFormat.E164)
+        except NumberParseException as e:
+            return api_response(False, f"Number parse error: {str(e)}", status_code=400)
+
+        # Now get from cache using normalized number
+        cache_key = f"signup_otp:{mobile_number}"
+        otp_data = cache.get(cache_key)
+
+        print(f"[DEBUG] FinalizeSignup cache key: {cache_key}, value: {otp_data}")
+
+        if not otp_data:
+            return api_response(False, "OTP expired or not found", status_code=400)
+
+        if otp_input != otp_data["otp"]:
             return api_response(False, "Invalid OTP", status_code=400)
 
-        otp_created = timezone.datetime.fromisoformat(otp_time_str)
+        otp_created = timezone.datetime.fromisoformat(otp_data["created_at"])
         if (timezone.now() - otp_created).total_seconds() > 300:
             return api_response(False, "OTP expired", status_code=400)
 
-        serializer = UserSerializer(data=signup_data)
+        serializer = UserSerializer(data=otp_data["signup_data"])
         if not serializer.is_valid():
             return api_response(False, "Signup data invalid", data=serializer.errors, status_code=400)
 
         user = User.objects.create(**serializer.validated_data)
 
-        # Clear session
-        for key in ["signup_data", "signup_otp", "signup_otp_time"]:
-            request.session.pop(key, None)
+        # Clear the OTP after success
+        cache.delete(cache_key)
 
         tokens = get_tokens_for_user(user)
         user_data = UserSerializer(user).data
 
-        print(f"[DEBUG] User created: {user.mobile_number} - {user.name or 'Unregistered'}")
-
         return api_response(True, "User registered successfully", data={
             "access": tokens["access"],
-            "user": user_data,
-            "mobile_number": user.mobile_number,
-            "country_code": user.country_code,
+            "user": user_data
         })
+
+
+# # Collect Signup Data and Send OTP
+# class SignupRequest(APIView):
+#     def post(self, request):
+#         serializer = UserSerializer(data=request.data)
+#         if not serializer.is_valid():
+#             return api_response(False, "Validation error", data=serializer.errors, status_code=400)
+
+#         data = serializer.validated_data
+#         mobile_number = data.get('mobile_number')
+#         email = data.get('email')
+
+#         if User.objects.filter(mobile_number=mobile_number).exists():
+#             return api_response(False, "Mobile number already registered", status_code=400)
+
+#         if email and User.objects.filter(email=email).exists():
+#             return api_response(False, "Email already registered", status_code=400)
+
+#         otp = generate_otp()
+
+#         request.session["signup_data"] = data
+#         request.session["signup_otp"] = otp
+#         request.session["signup_otp_time"] = timezone.now().isoformat()
+
+#         print(f"[DEBUG] Signup OTP for {mobile_number}: {otp}")
+#         return api_response(True, "OTP sent for verification", data={"otp": otp})
+
+
+# # Finalize Signup
+# class FinalizeSignup(APIView):
+#     def post(self, request):
+#         otp_input = request.data.get("otp")
+#         signup_data = request.session.get("signup_data")
+#         otp_sent = request.session.get("signup_otp")
+#         otp_time_str = request.session.get("signup_otp_time")
+
+#         if not signup_data or not otp_sent or not otp_time_str:
+#             return api_response(False, "Signup session expired or invalid", status_code=400)
+
+#         if otp_input != otp_sent:
+#             return api_response(False, "Invalid OTP", status_code=400)
+
+#         otp_created = timezone.datetime.fromisoformat(otp_time_str)
+#         if (timezone.now() - otp_created).total_seconds() > 300:
+#             return api_response(False, "OTP expired", status_code=400)
+
+#         serializer = UserSerializer(data=signup_data)
+#         if not serializer.is_valid():
+#             return api_response(False, "Signup data invalid", data=serializer.errors, status_code=400)
+
+#         user = User.objects.create(**serializer.validated_data)
+
+#         for key in ["signup_data", "signup_otp", "signup_otp_time"]:
+#             request.session.pop(key, None)
+
+#         tokens = get_tokens_for_user(user)
+#         user_data = UserSerializer(user).data
+
+#         print(f"[DEBUG] User created: {user.mobile_number} - {user.name or 'Unregistered'}")
+
+#         return api_response(True, "User registered successfully", data={
+#             "access": tokens["access"],
+#             #"token": tokens["refresh"],
+#             "user": user_data
+#         })
+
 
 # Profile Update View
 class ProfileView(APIView):
