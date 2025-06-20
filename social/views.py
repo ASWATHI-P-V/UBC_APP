@@ -15,8 +15,12 @@ class SocialMediaLinkListCreateView(generics.ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
+
+        if not queryset.exists():
+            return api_response(False, "No social media links found for this user.", data=None)
+
         serializer = self.get_serializer(queryset, many=True)
-        return api_response(True,"Social media links fetched successfully.",serializer.data)
+        return api_response(True, "Social media links fetched successfully.", serializer.data)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

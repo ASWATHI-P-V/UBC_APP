@@ -12,6 +12,7 @@ from phonenumbers import parse, is_valid_number, format_number, PhoneNumberForma
 from django.core.cache import cache
 from rest_framework import status
 from accounts.utils import api_response
+from phonenumbers import parse, is_valid_number, format_number, NumberParseException, PhoneNumberFormat
 
 def api_response(success, message, data=None, status_code=status.HTTP_200_OK):
     return Response({
@@ -69,28 +70,55 @@ class VerifyPhoneOTP(APIView):
 
         return api_response(False, "Invalid or expired OTP", status_code=400)
 
-        
+
+
 class SignupRequest(APIView):
     def post(self, request):
         data = request.data
 
-        mobile_number = data.get("mobile_number")
+        raw_mobile = data.get("mobile_number")
+        country_code = data.get("country_code")
         email = data.get("email")
 
+        # Validate presence of mobile and country code
+        if not raw_mobile or not country_code:
+            return api_response(False, "Mobile number and country code are required", data=None, status_code=400)
+
+        # Normalize the mobile number to E.164 format
+        try:
+            # If number starts with +, trust it and try parsing
+            if raw_mobile.startswith("+"):
+                parsed = parse(raw_mobile, None)
+            else:
+                parsed = parse(f"{country_code}{raw_mobile}", None)
+
+            if not is_valid_number(parsed):
+                return api_response(False, "Invalid mobile number", data=None, status_code=400)
+
+            normalized_mobile = format_number(parsed, PhoneNumberFormat.E164)
+            normalized_country_code = f"+{parsed.country_code}"
+
+        except NumberParseException as e:
+            return api_response(False, f"Mobile number parse error: {str(e)}", data=None, status_code=400)
+
         # Check for duplicate mobile/email BEFORE serializer.is_valid()
-        if mobile_number and User.objects.filter(mobile_number=mobile_number).exists():
+        if User.objects.filter(mobile_number=normalized_mobile).exists():
             return api_response(False, "Mobile number already registered", data=None, status_code=400)
 
         if email and User.objects.filter(email=email).exists():
             return api_response(False, "Email already registered", data=None, status_code=400)
 
+        # Inject the normalized values back into request data
+        data["mobile_number"] = normalized_mobile
+        data["country_code"] = normalized_country_code
+
         serializer = UserSerializer(data=data)
         if not serializer.is_valid():
-            return api_response(False, "Validation error", data=None, status_code=400)
+            return api_response(False, "Validation error", data=serializer.errors, status_code=400)
 
         try:
-            data = serializer.validated_data
-            mobile_number = data.get('mobile_number')  # Already formatted to E.164 in serializer
+            validated = serializer.validated_data
+            mobile_number = validated.get('mobile_number')  # E.164 format
 
             otp = generate_otp()
             cache_key = f"signup_otp:{mobile_number}"
@@ -98,7 +126,7 @@ class SignupRequest(APIView):
 
             cache.set(cache_key, {
                 "otp": otp,
-                "signup_data": data,
+                "signup_data": validated,
                 "created_at": timezone.now().isoformat()
             }, timeout=300)  # 5 minutes
 

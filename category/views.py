@@ -59,15 +59,3 @@ class CategoryDetailView(RetrieveAPIView):
                 status_code=status.HTTP_404_NOT_FOUND
             )
 
-
-
-# # category/views.py
-# from rest_framework import generics, filters
-# from .models import Category
-# from .serializers import CategorySerializer
-
-# class CategoryListView(generics.ListCreateAPIView):
-#     queryset = Category.objects.all()
-#     serializer_class = CategorySerializer
-#     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-#     search_fields = ['category_name', 'type']

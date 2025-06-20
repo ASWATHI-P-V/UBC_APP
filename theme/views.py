@@ -20,6 +20,17 @@ class ThemeRetrieveUpdateView(generics.RetrieveUpdateAPIView):
         theme, created = Theme.objects.get_or_create(user=self.request.user)
         return theme
 
+    
+    # def list(self, request, *args, **kwargs):
+    #     queryset = self.get_queryset()
+
+    #     if not queryset.exists():
+    #         return api_response(False, "No theme found for this user.", data=None)
+
+    #     serializer = self.get_serializer(queryset, many=True)
+    #     return api_response(True, "Themes fetched successfully.", serializer.data)
+
+
     def get(self, request, *args, **kwargs):
         theme = self.get_object()
         serializer = self.get_serializer(theme)
