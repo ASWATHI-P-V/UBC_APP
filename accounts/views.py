@@ -300,18 +300,21 @@ class ProfileDetailView(generics.RetrieveAPIView):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
 
-        if request.user != instance:
+        if request.user.is_authenticated and request.user != instance:
             # Check if the view is unique
-            already_viewed = ProfileViewRecord.objects.filter(
+            profile_view_record, created = ProfileViewRecord.objects.update_or_create(
+                viewer=request.user,
                 profile_owner=instance,
-                viewer=request.user
-            ).exists()
-
-            if not already_viewed:
-                # Create a record and increment unique view count
-                ProfileViewRecord.objects.create(profile_owner=instance, viewer=request.user)
+                defaults={'viewed_at': timezone.now()} # Always update the timestamp to now
+            )
+            if created: # This 'created' variable comes from update_or_create above
                 instance.profile_views = (instance.profile_views or 0) + 1
                 instance.save(update_fields=["profile_views"])
+            # if not already_viewed:
+            #     # Create a record and increment unique view count
+            #     ProfileViewRecord.objects.create(profile_owner=instance, viewer=request.user)
+            #     instance.profile_views = (instance.profile_views or 0) + 1
+            #     instance.save(update_fields=["profile_views"])
 
         serializer = self.get_serializer(instance)
         return api_response(

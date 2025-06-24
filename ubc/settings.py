@@ -46,7 +46,9 @@ INSTALLED_APPS = [
     'django_filters',
     'social',
     'services',
-    'theme'
+    'theme',
+    'contact',
+    'chats',
 
 ]
 

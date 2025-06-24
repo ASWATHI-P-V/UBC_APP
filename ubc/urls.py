@@ -12,6 +12,8 @@ urlpatterns = [
     path('api/social/', include('social.urls')),
     path('api/services/', include('services.urls')),
     path('api/theme/', include('theme.urls')),
+    path('api/contact/', include('contact.urls')),
+    path('api/chats/', include('chats.urls')),
     path('', lambda request: redirect('/admin/')),
 ]
 if settings.DEBUG:
