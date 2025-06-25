@@ -14,6 +14,7 @@ urlpatterns = [
     path('api/theme/', include('theme.urls')),
     path('api/contact/', include('contact.urls')),
     path('api/chats/', include('chats.urls')),
+    path('api/notifications/', include('notifications.urls')),
     path('', lambda request: redirect('/admin/')),
 ]
 if settings.DEBUG:

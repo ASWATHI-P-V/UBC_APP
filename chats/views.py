@@ -27,10 +27,12 @@ class MessageListView(generics.ListAPIView):
     
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        
-        return api_response(False,"No messages found for your inbox.",None, status.HTTP_200_OK)
+        if not queryset.exists():
+            return api_response(False,"No messages found for your inbox.",None, status.HTTP_200_OK)
 
+        
         serializer = self.get_serializer(queryset, many=True)
+        return api_response(True,"Messages retrieved successfully.",serializer.data, status.HTTP_200_OK)
 
 class MessageCreateView(generics.CreateAPIView):
     """

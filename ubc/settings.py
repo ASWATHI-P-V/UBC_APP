@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'theme',
     'contact',
     'chats',
+    'notifications',
 
 ]
 
@@ -193,7 +194,7 @@ JAZZMIN_SETTINGS = {
     "navigation_expanded": True,
     "hide_apps": [],
     "hide_models": [],
-    "order_with_respect_to": ["accounts", "category", "media_management", "social", "theme"],
+    "order_with_respect_to": ["accounts", "category", "media_management", "social", "theme", "services", "contact", "chats", "notifications"],
 
     "icons": {
         "accounts": "fas fa-id-badge",
@@ -208,6 +209,14 @@ JAZZMIN_SETTINGS = {
         "social.SocialMediaPlatform": "fas fa-globe",
         "theme": "fas fa-fill-drip",
         "theme.Theme": "fas fa-brush",
+        "services": "fas fa-tools",                  
+        "services.Service": "fas fa-briefcase",      
+        "contact": "fas fa-address-book",           
+        "contact.ContactMessage": "fas fa-envelope",
+        "chats": "fas fa-comments",                 
+        "chats.Message": "fas fa-comment-alt",      
+        "notifications": "fas fa-bell",              
+        "notifications.Notification": "fas fa-bell", 
     },
 
     # "topmenu_links": [
