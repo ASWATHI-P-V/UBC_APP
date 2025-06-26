@@ -121,24 +121,3 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         return instance
 
 
-# class UserProfileUpdateSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = User
-#         fields = [
-#             'name', 'mobile_number', 'address', 'role', 'profile_picture', 'category',
-#             'designation', 'about', 'enable_designation_and_company_name', 'business_name',
-#             'company_name', 'logo'
-#         ]
-
-#     def validate(self, attrs):
-#         role = attrs.get('role', None)
-
-#         if role == 'business':
-#             if not attrs.get('business_name'):
-#                 raise serializers.ValidationError({"business_name": "This field is required for business role."})
-#             if not attrs.get('logo'):
-#                 raise serializers.ValidationError({"logo": "This field is required for business role."})
-
-#         return attrs
-
-

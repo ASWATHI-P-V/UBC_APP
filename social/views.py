@@ -55,18 +55,21 @@ class SocialMediaLinkDeleteView(generics.DestroyAPIView):
     #     return api_response(True,"Social media deleted successfully.",None)
 
 
-class SocialMediaPlatformCreateView(generics.CreateAPIView):
+class SocialMediaPlatformListCreateView(generics.ListCreateAPIView):
     queryset = SocialMediaPlatform.objects.all()
     serializer_class = SocialMediaPlatformSerializer
-    # permission_classes = [permissions.IsAdminUser]  # Optional: limit to admin
+    # permission_classes = [permissions.IsAdminUser]  # Optional
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return api_response(True, "Social media platforms fetched successfully.", serializer.data, status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-        except ValidationError as e:
-            return api_response(False,"social media platform with this name already exists.",None,status.HTTP_400_BAD_REQUEST)
+        except ValidationError:
+            return api_response(False, "Social media platform with this name already exists.", None, status.HTTP_400_BAD_REQUEST)
         self.perform_create(serializer)
-        return api_response(True,"Social media platform created successfully.",serializer.data,status.HTTP_201_CREATED)
-       
-
+        return api_response(True, "Social media platform created successfully.", serializer.data, status.HTTP_201_CREATED)
