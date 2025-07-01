@@ -6,12 +6,52 @@ from media_management.models import ImageUpload
 from media_management.serializers import ImageUploadSerializer
 from category.models import Category
 from category.serializers import CategorySerializer
+from django.contrib.auth import get_user_model
+from social.serializers import SocialMediaLinkSerializer
+
 
 class UserSerializer(serializers.ModelSerializer):
+    profileupdate_completed = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = User
-        fields = ['id', 'name', 'email', 'mobile_number', 'country_code', 'is_whatsapp']
-    
+        fields = ['id', 'name', 'email', 'mobile_number', 'country_code', 'is_whatsapp', 'profileupdate_completed', 'profile_picture', 'role', 'about']
+
+    def get_profileupdate_completed(self, obj):
+        # Required fields for all users
+        required_fields = ['name', 'mobile_number', 'address', 'role', 'profile_picture', 'category']
+
+        # Additional fields required if role is 'business'
+        if obj.role == 'business':
+            required_fields += ['business_name', 'logo']
+
+        for field in required_fields:
+            value = getattr(obj, field, None)
+            if not value:
+                return False
+        return True
+
+    def validate(self, attrs):
+        role = attrs.get('role', None)
+        if role == 'business':
+            if not attrs.get('business_name'):
+                raise serializers.ValidationError({"business_name": "This field is required for business role."})
+            if not attrs.get('logo'):
+                raise serializers.ValidationError({"logo": "This field is required for business role."})
+        return attrs
+
+    def update(self, instance, validated_data):
+        image_file = validated_data.pop('image_file', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if image_file:
+            ImageUpload.objects.create(user=instance, image=image_file)
+
+        instance = User.objects.prefetch_related('uploaded_images').get(id=instance.id)
+        return instance
+
     def to_representation(self, instance):
         rep = super().to_representation(instance)
 
@@ -76,9 +116,9 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'name', 'mobile_number', 'address', 'role', 'profile_picture', 'category','category_id',   # for input
-            'designation', 'about', 'enable_designation_and_company_name', 'business_name',
-            'company_name', 'logo',
+            'name','email', 'mobile_number', 'address', 'role', 'profile_picture', 'category','category_id',  
+            'designation', 'about', 'social_links','enable_designation_and_company_name', 'business_name',
+            'company_name', 'logo', 
             'image_file', 'profile_views','profileupdate_completed'  
         ]
         extra_kwargs = {
@@ -121,3 +161,24 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         return instance
 
 
+
+User = get_user_model() # Get the currently active user model
+class UserListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'name', 'email']
+        # Add any other fields you want to expose for the user list
+        # For example, if you have a 'role' field directly on your User model:
+        # fields = ['id', 'username', 'email', 'first_name', 'last_name', 'date_joined', 'role']
+
+# Keep your existing UserProfileUpdateSerializer as is for profile updates.
+# from .models import UserProfile # Assuming UserProfile is where extra user data is
+# class UserProfileUpdateSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User # or UserProfile if you have a separate profile model
+#         fields = ['first_name', 'last_name', 'email', 'phone_number', 'address', 'bio', 'profile_picture', 'role', 'logo']
+#  
+
+# social service and theme
+
+# social put

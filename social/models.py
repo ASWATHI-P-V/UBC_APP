@@ -1,5 +1,6 @@
 from django.db import models
-from accounts.models import User  # Adjust if your user model import is different
+from django.conf import settings
+# from accounts.models import User 
 
 class SocialMediaPlatform(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -10,7 +11,8 @@ class SocialMediaPlatform(models.Model):
         return self.name
 
 class SocialMediaLink(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="social_links")
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="social_links")
     platform = models.ForeignKey(SocialMediaPlatform, on_delete=models.CASCADE)
     platform_url = models.CharField(max_length=255)  # URL or phone number
 

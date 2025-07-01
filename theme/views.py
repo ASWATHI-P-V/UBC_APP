@@ -33,6 +33,9 @@ class ThemeRetrieveUpdateView(generics.RetrieveUpdateAPIView):
 
     def get(self, request, *args, **kwargs):
         theme = self.get_object()
+        # If the theme does not exist, it will be created by get_object
+        if not theme:   
+            return api_response(False, "Theme not found for this user.", [])
         serializer = self.get_serializer(theme)
         return api_response(True, "Theme fetched successfully", serializer.data)
 

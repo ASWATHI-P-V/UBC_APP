@@ -20,6 +20,13 @@ class CategoryListView(generics.ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        if not queryset.exists():
+            return api_response(
+                success=False,
+                message="No categories found.",
+                data=[],
+                status_code=status.HTTP_404_NOT_FOUND
+            )
         serializer = self.get_serializer(queryset, many=True)
         return api_response(
             success=True,

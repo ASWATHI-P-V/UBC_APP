@@ -25,7 +25,7 @@ class NotificationListView(generics.ListAPIView):
         queryset = self.get_queryset()
         
         if not queryset.exists():
-            return api_response(False,"No notifications found.",None, status.HTTP_200_OK)
+            return api_response(False,"No notifications found.",[], status.HTTP_200_OK)
         
         serializer = self.get_serializer(queryset, many=True)
         return api_response(True,"Notifications retrieved successfully.",serializer.data, status.HTTP_200_OK)

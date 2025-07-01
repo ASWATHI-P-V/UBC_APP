@@ -8,4 +8,6 @@ urlpatterns = [
     path('finalize-signup/', views.FinalizeSignup.as_view()), 
     path('profile/', views.ProfileView.as_view()),
     path('profile/<int:pk>/', views.ProfileDetailView.as_view(), name='profile-detail'),
+    path('users/', views.UserListView.as_view(), name='user-list'),
+    path('profile-public/<int:pk>/', views.ProfilePublicDetailView.as_view(), name='profile-public-detail'),
 ]

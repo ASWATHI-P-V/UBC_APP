@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
 from category.models import Category
+from social.models import SocialMediaLink  # Assuming you have a Social model defined in social app
 
 
 class UserManager(BaseUserManager):
@@ -50,6 +51,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     enable_designation_and_company_name = models.BooleanField(default=False,null=True, blank=True)
     designation = models.CharField(max_length=100, null=True, blank=True)
     about = models.TextField(null=True, blank=True)
+    # social_links = models.ManyToManyField(SocialMediaLink, blank=True)
 
     business_name = models.CharField(max_length=255, null=True, blank=True)
     company_name = models.CharField(max_length=255, null=True, blank=True)
