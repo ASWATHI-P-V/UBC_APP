@@ -8,6 +8,7 @@ from category.models import Category
 from category.serializers import CategorySerializer
 from django.contrib.auth import get_user_model
 from social.serializers import SocialMediaLinkSerializer
+from django.db import models
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -101,50 +102,102 @@ class UserSerializer(serializers.ModelSerializer):
         
         return attrs
 
-
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
     category_id = serializers.PrimaryKeyRelatedField(
         source='category',
         queryset=Category.objects.all(),
         write_only=True,
-        required=False
+        required=False,
+        allow_null=True
     )
     category = CategorySerializer(read_only=True)
     image_file = serializers.ImageField(write_only=True, required=False)
     profileupdate_completed = serializers.SerializerMethodField(read_only=True)
+    social_links = SocialMediaLinkSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
         fields = [
-            'name','email', 'mobile_number', 'address', 'role', 'profile_picture', 'category','category_id',  
-            'designation', 'about', 'social_links','enable_designation_and_company_name', 'business_name',
-            'company_name', 'logo', 
-            'image_file', 'profile_views','profileupdate_completed'  
+            'name', 'email', 'mobile_number', 'address', 'role', 'profile_picture', 'category', 'category_id',
+            'designation', 'about', 'social_links', 'enable_designation_and_company_name', 'business_name',
+            'company_name', 'logo',
+            'image_file', 'profile_views', 'profileupdate_completed'
         ]
         extra_kwargs = {
             'category_id': {'write_only': True},
+            # We set required=False here because the actual requirement is enforced in the validate method
+            'profile_picture': {'required':True},
+            'logo': {'required': False, 'allow_null': True},
         }
+
     def get_profileupdate_completed(self, obj):
-        # Required fields for all users
         required_fields = ['name', 'mobile_number', 'address', 'role', 'profile_picture', 'category']
 
-        # Additional fields required if role is 'business'
         if obj.role == 'business':
             required_fields += ['business_name', 'logo']
 
-        for field in required_fields:
-            value = getattr(obj, field, None)
-            if not value:
+        for field_name in required_fields:
+            value = getattr(obj, field_name, None)
+
+            if hasattr(User, field_name) and isinstance(getattr(User, field_name).field, models.ImageField):
+                if not value or not bool(value.name):
+                    return False
+            elif not value:
                 return False
         return True
 
     def validate(self, attrs):
-        role = attrs.get('role', None)
-        if role == 'business':
-            if not attrs.get('business_name'):
-                raise serializers.ValidationError({"business_name": "This field is required for business role."})
-            if not attrs.get('logo'):
-                raise serializers.ValidationError({"logo": "This field is required for business role."})
+        instance = self.instance
+
+        current_role = attrs.get('role', instance.role if instance else None)
+
+        if current_role is None and instance is None:
+             raise serializers.ValidationError({"role": "Role is required."})
+
+        # --- Validation for 'business' role ---
+        if current_role == 'business':
+            business_name = attrs.get('business_name', instance.business_name if instance else None)
+            if not business_name:
+                raise serializers.ValidationError({"business_name": "Business name is required for business role."})
+
+            # CONDITION 2: LOGO IS REQUIRED FOR BUSINESS ROLE
+            logo = attrs.get('logo', instance.logo if instance else None)
+            if not logo and (instance is None or not instance.logo):
+                raise serializers.ValidationError({"logo": "Logo is required for business role."})
+
+            # Clear individual-specific fields if transitioning from individual to business
+            if instance and instance.role == 'individual' and 'role' in attrs and attrs['role'] == 'business':
+                attrs['designation'] = None
+                attrs['about'] = None
+                # No need to clear profile_picture here, as it's universally required now
+
+        # --- Validation for 'individual' role ---
+        elif current_role == 'individual':
+            # Clear business-specific fields if transitioning from business to individual
+            if instance and instance.role == 'business' and 'role' in attrs and attrs['role'] == 'individual':
+                attrs['business_name'] = None
+                attrs['company_name'] = None
+                attrs['logo'] = None
+
+        # --- General validation for all roles ---
+        # CONDITION 1: PROFILE PICTURE IS REQUIRED FOR ALL ROLES
+        profile_picture = attrs.get('profile_picture', instance.profile_picture if instance else None)
+        if not profile_picture and (instance is None or not instance.profile_picture):
+            raise serializers.ValidationError({"profile_picture": "Profile picture is required."})
+
+        # Other general validations
+        name = attrs.get('name', instance.name if instance else None)
+        if not name:
+            raise serializers.ValidationError({"name": "Name is required."})
+
+        address = attrs.get('address', instance.address if instance else None)
+        if not address:
+            raise serializers.ValidationError({"address": "Address is required."})
+
+        category = attrs.get('category', instance.category if instance else None)
+        if not category:
+            raise serializers.ValidationError({"category": "Category is required."})
+
         return attrs
 
     def update(self, instance, validated_data):
@@ -157,9 +210,142 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         if image_file:
             ImageUpload.objects.create(user=instance, image=image_file)
 
-        instance = User.objects.prefetch_related('uploaded_images').get(id=instance.id)
         return instance
 
+
+# class UserProfileUpdateSerializer(serializers.ModelSerializer):
+#     category_id = serializers.PrimaryKeyRelatedField(
+#         source='category',
+#         queryset=Category.objects.all(),
+#         write_only=True,
+#         required=False
+#     )
+#     category = CategorySerializer(read_only=True)
+#     image_file = serializers.ImageField(write_only=True, required=False)
+#     profileupdate_completed = serializers.SerializerMethodField(read_only=True)
+
+#     class Meta:
+#         model = User
+#         fields = [
+#             'name','email', 'mobile_number', 'address', 'role', 'profile_picture', 'category','category_id',  
+#             'designation', 'about', 'social_links','enable_designation_and_company_name', 'business_name',
+#             'company_name', 'logo', 
+#             'image_file', 'profile_views','profileupdate_completed'  
+#         ]
+#         extra_kwargs = {
+#             'category_id': {'write_only': True},
+#             'profile_picture': {'required': False, 'allow_null': True},
+#             'logo': {'required': False, 'allow_null': True},
+#         }
+#     def get_profileupdate_completed(self, obj):
+#         # This method is for read-only display, not for validation during PUT/PATCH.
+#         # It checks if profile is "complete" for display purposes.
+#         required_fields = ['name', 'mobile_number', 'address', 'role', 'profile_picture', 'category']
+
+#         if obj.role == 'business':
+#             required_fields += ['business_name', 'logo']
+
+#         for field in required_fields:
+#             value = getattr(obj, field, None)
+#             # For ImageFields, check if a file is actually associated
+#             if isinstance(getattr(User, field).field, models.ImageField):
+#                 if not value or not bool(value.name): # Check if image field has a file name
+#                     return False
+#             elif not value:
+#                 return False
+#         return True
+
+
+#     def validate(self, attrs):
+#         # Get the current instance (if it's an update)
+#         instance = self.instance
+
+#         # Determine the role: either from the incoming data or the existing instance
+#         # If 'role' is provided in attrs, use that. Otherwise, use the instance's role.
+#         # If it's a creation, instance will be None, and attrs.get('role') will be used.
+#         current_role = attrs.get('role', instance.role if instance else None)
+
+#         # Ensure role is set for new users or if being updated
+#         if current_role is None and instance is None: # For creation if role is not provided
+#              raise serializers.ValidationError({"role": "Role is required."})
+
+
+#         # --- Validation for 'business' role ---
+#         if current_role == 'business':
+#             # Check business_name
+#             business_name = attrs.get('business_name', instance.business_name if instance else None)
+#             if not business_name:
+#                 raise serializers.ValidationError({"business_name": "Business name is required for business role."})
+
+#             # Check logo
+#             logo = attrs.get('logo', instance.logo if instance else None)
+#             # If logo is being updated or was never set, and no new logo is provided
+#             if not logo and (instance is None or not instance.logo):
+#                 raise serializers.ValidationError({"logo": "Logo is required for business role."})
+
+#             # Clear individual-specific fields if transitioning from individual to business
+#             if instance and instance.role == 'individual' and 'role' in attrs and attrs['role'] == 'business':
+#                 attrs['designation'] = None
+#                 attrs['about'] = None
+#                 # Add other individual-specific fields to clear if they exist
+
+#         # --- Validation for 'individual' role ---
+#         elif current_role == 'individual':
+#             # Check profile_picture for individual role (if it's a required field for them)
+#             profile_picture = attrs.get('profile_picture', instance.profile_picture if instance else None)
+#             # If profile_picture is being updated or was never set, and no new picture is provided
+#             if not profile_picture and (instance is None or not instance.profile_picture):
+#                 raise serializers.ValidationError({"profile_picture": "Profile picture is required for individual role."})
+
+#             # Clear business-specific fields if transitioning from business to individual
+#             if instance and instance.role == 'business' and 'role' in attrs and attrs['role'] == 'individual':
+#                 attrs['business_name'] = None
+#                 attrs['company_name'] = None
+#                 attrs['logo'] = None
+#                 # Add other business-specific fields to clear if they exist
+
+#         # General validation for 'name' and 'address' (if required for both)
+#         # You can add more general checks here
+#         name = attrs.get('name', instance.name if instance else None)
+#         if not name:
+#             raise serializers.ValidationError({"name": "Name is required."})
+
+#         address = attrs.get('address', instance.address if instance else None)
+#         if not address:
+#             raise serializers.ValidationError({"address": "Address is required."})
+
+#         # Category check (if required for all roles)
+#         category = attrs.get('category', instance.category if instance else None)
+#         if not category:
+#             raise serializers.ValidationError({"category": "Category is required."})
+
+
+#         return attrs
+
+#     def update(self, instance, validated_data):
+#         image_file = validated_data.pop('image_file', None)
+
+#         # Handle updating many-to-many fields if you had them (e.g., social_links)
+#         # social_links_data = validated_data.pop('social_links', None)
+#         # if social_links_data is not None:
+#         #     instance.social_links.set(social_links_data) # Or add/remove as needed
+
+#         for attr, value in validated_data.items():
+#             setattr(instance, attr, value)
+#         instance.save()
+
+#         if image_file:
+#             # Assuming ImageUpload model exists and handles profile_picture or other image uploads
+#             # If image_file is meant for profile_picture, you might set instance.profile_picture = image_file
+#             # and save directly, or use ImageUpload if it's for a gallery.
+#             # For now, keeping your original ImageUpload logic.
+#             ImageUpload.objects.create(user=instance, image=image_file)
+
+#         # Pre-fetch related data for the response, if necessary for the serializer's output
+#         # instance = User.objects.prefetch_related('uploaded_images').get(id=instance.id)
+#         # If 'social_links' is a ManyToManyField, you might need to prefetch it here
+#         # instance = User.objects.prefetch_related('social_links').get(id=instance.id)
+#         return instance
 
 
 User = get_user_model() # Get the currently active user model
