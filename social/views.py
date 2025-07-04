@@ -5,6 +5,10 @@ from accounts.utils import api_response
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from rest_framework import serializers
+from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound 
+
 
 class SocialMediaLinkListCreateView(generics.ListCreateAPIView):
     serializer_class = SocialMediaLinkSerializer
@@ -43,7 +47,7 @@ class SocialMediaLinkListCreateView(generics.ListCreateAPIView):
             # e.detail contains a dictionary of validation errors for each field
             return api_response(
                 False,
-                "please provide the name, picture, and description.",
+                "please provide the details.",
                 [],
                 status.HTTP_400_BAD_REQUEST
             )
@@ -74,13 +78,34 @@ class SocialMediaLinkListCreateView(generics.ListCreateAPIView):
 class UserSocialMediaLinkDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = SocialMediaLinkSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_queryset(self):
         """
         Ensures users can only manage their own social media links.
         """
         return SocialMediaLink.objects.filter(user=self.request.user)
 
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Custom retrieve method to use api_response for consistent output.
+        """
+        try:
+            instance = self.get_object() # get_object() automatically applies get_queryset filter
+        except NotFound:
+            return api_response(
+                success=False,
+                message="Social media link not found or does not belong to the user.",
+                data=None,
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.get_serializer(instance)
+        return api_response(
+            success=True,
+            message="Social media link retrieved successfully.",
+            data=serializer.data, # This will be the single object
+            status_code=status.HTTP_200_OK
+        )
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -154,6 +179,76 @@ class SocialMediaLinkDeleteView(generics.DestroyAPIView):
     #     instance = self.get_object()
     #     self.perform_destroy(instance)
     #     return api_response(True,"Social media deleted successfully.",None)
+
+class SocialMediaLinkRetrieveView(generics.RetrieveAPIView):
+    serializer_class = SocialMediaLinkSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Ensures that a user can only retrieve their own social media links.
+        If an admin needs to see all, adjust this with an 'if self.request.user.is_staff:' check.
+        """
+        # Assuming your User model has a related_name='social_links' pointing to SocialMediaLink
+        return self.request.user.social_links.all()
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Custom retrieve method to use api_response for consistent output.
+        """
+        try:
+            instance = self.get_object() # get_object() automatically applies get_queryset filter
+        except NotFound:
+            return api_response(
+                success=False,
+                message="Social media link not found or does not belong to the user.",
+                data=None,
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.get_serializer(instance)
+        return api_response(
+            success=True,
+            message="Social media link retrieved successfully.", # Changed message
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
+
+
+
+# class SocialMediaLinkRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = SocialMediaLinkSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+#     lookup_field = 'pk' # Default, but good to be explicit
+
+#     def get_queryset(self):
+#         """
+#         Ensures users can only access their own social media links.
+#         Admins might see all, if self.request.user.is_staff is true.
+#         """
+#         if self.request.user.is_staff:
+#             return SocialMediaLink.objects.all() # Or whatever your base queryset is
+#         return self.request.user.social_links.all()
+
+#     # Override methods to use your api_response utility for consistent output
+#     def retrieve(self, request, *args, **kwargs):
+#         try:
+#             instance = self.get_object() # This will get a single object, filtered by get_queryset
+#         except NotFound:
+#             return api_response(
+#                 success=False,
+#                 message="Social media link not found or does not belong to the user.",
+#                 data=None,
+#                 status_code=status.HTTP_404_NOT_FOUND
+#             )
+
+#         serializer = self.get_serializer(instance)
+#         return api_response(
+#             success=True,
+#             message="Social media link fetched successfully.", # Message for single item
+#             data=serializer.data, # <--- THIS IS THE KEY: it's not a list now
+#             status_code=status.HTTP_200_OK
+#         )
 
 
 class SocialMediaPlatformListCreateView(generics.ListCreateAPIView):

@@ -219,13 +219,22 @@ class ProfileView(APIView):
                 data=serializer.data,
                 status_code=status.HTTP_200_OK
             )
+        else:
+            error_message = "Validation Error" # Default generic message
+            if serializer.errors:
+                first_field = next(iter(serializer.errors))
+                if serializer.errors[first_field] and isinstance(serializer.errors[first_field], list):
+                    error_message = serializer.errors[first_field][0]
+                elif 'non_field_errors' in serializer.errors and serializer.errors['non_field_errors']:
+                    error_message = serializer.errors['non_field_errors'][0]
 
-        return api_response(
-            False,
-            "logo is required for business role",
-            data="",
-            status_code=status.HTTP_400_BAD_REQUEST
-        )
+            return api_response(
+                False,
+                error_message,
+                data=None, # <--- CHANGED THIS LINE to pass None for data
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
         
 
 class ProfileDetailView(generics.RetrieveAPIView):

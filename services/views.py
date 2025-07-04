@@ -17,10 +17,13 @@ class ServiceListCreateView(generics.ListCreateAPIView):
         queryset = self.get_queryset()
 
         if not queryset.exists():
-            return api_response(False, "No service found for this user.", data=[], status_code=status.HTTP_404_NOT_FOUND) # Added status_code
+            return api_response(True, "No service found for this user.", data=[], status_code=status.HTTP_200_OK) 
 
         serializer = self.get_serializer(queryset, many=True)
         return api_response(True, "Service fetched successfully.", serializer.data, status_code=status.HTTP_200_OK) # Added status_code
+
+
+    
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -43,6 +46,41 @@ class ServiceListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+class ServiceRetrieveView(generics.RetrieveAPIView):
+    serializer_class = ServiceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Ensures that a user can only retrieve their own services.
+        Admins might see all, if a separate permission handles that.
+        """
+        # Assuming `Service` model has a ForeignKey to User, and User has related_name='services'
+        return self.request.user.services.all()
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Custom retrieve method to use api_response for consistent output.
+        """
+        try:
+            instance = self.get_object() # get_object() automatically applies get_queryset filter
+        except NotFound:
+            return api_response(
+                success=False,
+                message="Service not found or does not belong to the user.",
+                data=None,
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.get_serializer(instance)
+        return api_response(
+            success=True,
+            message="Service retrieved successfully.",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
+
 
 
 class ServiceUpdateView(generics.UpdateAPIView):
