@@ -1,0 +1,96 @@
+INFO 2025-07-10 17:40:59,591 autoreload 7172 19848 Watching for file changes with StatReloader
+ERROR 2025-07-10 17:41:14,164 exception 7172 18468 Invalid HTTP_HOST header: '0.0.0.0:8000'. You may need to add '0.0.0.0' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\UBC\UBC_APP copy\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\ThinkPad\UBC\UBC_APP copy\venv\Lib\site-packages\django\utils\deprecation.py", line 119, in __call__
+    response = self.process_request(request)
+  File "C:\Users\ThinkPad\UBC\UBC_APP copy\venv\Lib\site-packages\django\middleware\common.py", line 48, in process_request
+    host = request.get_host()
+  File "C:\Users\ThinkPad\UBC\UBC_APP copy\venv\Lib\site-packages\django\http\request.py", line 186, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '0.0.0.0:8000'. You may need to add '0.0.0.0' to ALLOWED_HOSTS.
+WARNING 2025-07-10 17:41:14,316 log 7172 18468 Bad Request: /api/services/74/
+WARNING 2025-07-10 17:41:14,316 basehttp 7172 18468 "GET /api/services/74/ HTTP/1.1" 400 77431
+INFO 2025-07-10 17:43:41,130 autoreload 20328 3712 Watching for file changes with StatReloader
+ERROR 2025-07-10 17:43:44,014 exception 20328 3588 Invalid HTTP_HOST header: '0.0.0.0:8000'. You may need to add '0.0.0.0' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\UBC\UBC_APP copy\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\ThinkPad\UBC\UBC_APP copy\venv\Lib\site-packages\django\utils\deprecation.py", line 119, in __call__
+    response = self.process_request(request)
+  File "C:\Users\ThinkPad\UBC\UBC_APP copy\venv\Lib\site-packages\django\middleware\common.py", line 48, in process_request
+    host = request.get_host()
+  File "C:\Users\ThinkPad\UBC\UBC_APP copy\venv\Lib\site-packages\django\http\request.py", line 186, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '0.0.0.0:8000'. You may need to add '0.0.0.0' to ALLOWED_HOSTS.
+WARNING 2025-07-10 17:43:44,048 log 20328 3588 Bad Request: /api/services/74/
+WARNING 2025-07-10 17:43:44,049 basehttp 20328 3588 "GET /api/services/74/ HTTP/1.1" 400 77427
+INFO 2025-07-10 17:44:43,184 autoreload 17772 4520 Watching for file changes with StatReloader
+INFO 2025-07-10 17:45:27,513 autoreload 19988 17744 Watching for file changes with StatReloader
+INFO 2025-07-10 17:45:38,836 basehttp 19988 2012 "GET /api/services/74/ HTTP/1.1" 200 70
+WARNING 2025-07-10 17:51:31,275 log 19988 15052 Unauthorized: /api/request-otp/
+WARNING 2025-07-10 17:51:31,276 basehttp 19988 15052 "POST /api/request-otp/ HTTP/1.1" 401 141
+WARNING 2025-07-10 17:52:13,911 log 19988 15052 Unauthorized: /api/request-otp/
+WARNING 2025-07-10 17:52:13,912 basehttp 19988 15052 "POST /api/request-otp/ HTTP/1.1" 401 141
+INFO 2025-07-10 17:58:50,952 autoreload 19988 17744 C:\Users\ThinkPad\UBC\UBC_APP copy\ubc\settings.py changed, reloading.
+INFO 2025-07-10 17:58:51,711 autoreload 16460 9444 Watching for file changes with StatReloader
+WARNING 2025-07-10 17:58:55,475 log 16460 19976 Not Found: /api/request-otp/
+WARNING 2025-07-10 17:58:55,475 basehttp 16460 19976 "POST /api/request-otp/ HTTP/1.1" 404 84
+WARNING 2025-07-10 17:59:29,134 log 16460 19976 Not Found: /api/request-otp/
+WARNING 2025-07-10 17:59:29,134 basehttp 16460 19976 "POST /api/request-otp/ HTTP/1.1" 404 84
+INFO 2025-07-10 17:59:57,627 basehttp 16460 19976 "POST /api/request-otp/ HTTP/1.1" 200 89
+INFO 2025-07-10 18:00:29,754 basehttp 16460 19976 "POST /api/verify-otp/ HTTP/1.1" 200 514
+WARNING 2025-07-10 18:00:59,648 log 16460 19976 Not Found: /api/services/74/
+WARNING 2025-07-10 18:00:59,649 basehttp 16460 19976 "GET /api/services/74/ HTTP/1.1" 404 48
+INFO 2025-07-10 18:02:11,974 autoreload 7216 19584 Watching for file changes with StatReloader
+INFO 2025-07-10 18:02:18,715 basehttp 7216 3952 "GET /admin/ HTTP/1.1" 302 0
+INFO 2025-07-10 18:02:18,738 basehttp 7216 3952 "GET /admin/login/?next=/admin/ HTTP/1.1" 200 3007
+INFO 2025-07-10 18:02:18,778 basehttp 7216 1780 "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 304 0
+INFO 2025-07-10 18:02:18,917 basehttp 7216 9304 "GET /static/accounts/img/logo1.jpg HTTP/1.1" 200 5355
+INFO 2025-07-10 18:02:18,929 basehttp 7216 18528 "GET /static/vendor/fontawesome-free/css/all.min.css HTTP/1.1" 200 103009
+INFO 2025-07-10 18:02:18,938 basehttp 7216 20088 "GET /static/jazzmin/css/main.css HTTP/1.1" 200 16969
+INFO 2025-07-10 18:02:18,957 basehttp 7216 3952 "GET /static/vendor/adminlte/css/adminlte.min.css HTTP/1.1" 200 1382975
+INFO 2025-07-10 18:02:18,979 basehttp 7216 1780 "GET /static/vendor/adminlte/js/adminlte.min.js HTTP/1.1" 200 44244
+INFO 2025-07-10 18:02:18,991 basehttp 7216 11620 "GET /static/vendor/bootstrap/js/bootstrap.min.js HTTP/1.1" 200 62440
+INFO 2025-07-10 18:02:19,037 basehttp 7216 11620 "GET /static/vendor/fontawesome-free/webfonts/fa-solid-900.woff2 HTTP/1.1" 200 156400
+INFO 2025-07-10 18:02:21,040 basehttp 7216 11620 "POST /admin/login/?next=/admin/ HTTP/1.1" 302 0
+INFO 2025-07-10 18:02:21,161 basehttp 7216 11620 "GET /admin/ HTTP/1.1" 200 40214
+INFO 2025-07-10 18:02:21,190 basehttp 7216 11620 "GET /static/jazzmin/js/main.js HTTP/1.1" 200 2391
+INFO 2025-07-10 18:02:21,239 basehttp 7216 11620 "GET /static/vendor/fontawesome-free/webfonts/fa-brands-400.woff2 HTTP/1.1" 200 117852
+INFO 2025-07-10 18:02:21,241 basehttp 7216 1780 "GET /static/vendor/fontawesome-free/webfonts/fa-regular-400.woff2 HTTP/1.1" 200 25392
+INFO 2025-07-10 18:02:22,809 basehttp 7216 1780 "GET /admin/accounts/user/ HTTP/1.1" 200 65999
+INFO 2025-07-10 18:02:22,852 basehttp 7216 9304 "GET /static/admin/js/prepopulate.js HTTP/1.1" 304 0
+INFO 2025-07-10 18:02:22,852 basehttp 7216 11620 "GET /static/admin/js/jquery.init.js HTTP/1.1" 304 0
+INFO 2025-07-10 18:02:22,852 basehttp 7216 18528 "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 304 0
+INFO 2025-07-10 18:02:22,853 basehttp 7216 20088 "GET /static/admin/js/core.js HTTP/1.1" 304 0
+INFO 2025-07-10 18:02:22,859 basehttp 7216 9304 "GET /static/admin/js/actions.js HTTP/1.1" 304 0
+INFO 2025-07-10 18:02:22,859 basehttp 7216 11620 "GET /static/admin/js/urlify.js HTTP/1.1" 304 0
+INFO 2025-07-10 18:02:22,862 basehttp 7216 18528 "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 304 0
+INFO 2025-07-10 18:02:22,862 basehttp 7216 20088 "GET /static/admin/img/icon-yes.svg HTTP/1.1" 304 0
+INFO 2025-07-10 18:02:22,864 basehttp 7216 1780 "GET /static/vendor/select2/css/select2.min.css HTTP/1.1" 200 16264
+INFO 2025-07-10 18:02:22,871 basehttp 7216 1780 "GET /static/jazzmin/js/change_list.js HTTP/1.1" 200 2252
+INFO 2025-07-10 18:02:22,878 basehttp 7216 3952 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-07-10 18:02:22,923 basehttp 7216 18528 "GET /static/vendor/select2/js/select2.min.js HTTP/1.1" 200 73170
+INFO 2025-07-10 18:02:24,940 basehttp 7216 18528 "GET /admin/accounts/user/71/change/ HTTP/1.1" 200 41767
+INFO 2025-07-10 18:02:24,967 basehttp 7216 20088 "GET /static/admin/js/change_form.js HTTP/1.1" 304 0
+INFO 2025-07-10 18:02:24,969 basehttp 7216 3952 "GET /static/admin/img/icon-changelink.svg HTTP/1.1" 304 0
+INFO 2025-07-10 18:02:24,969 basehttp 7216 1780 "GET /static/admin/js/prepopulate_init.js HTTP/1.1" 304 0
+INFO 2025-07-10 18:02:24,970 basehttp 7216 18528 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-07-10 18:02:24,976 basehttp 7216 1780 "GET /static/jazzmin/js/change_form.js HTTP/1.1" 200 6052
+INFO 2025-07-10 18:02:24,978 basehttp 7216 18528 "GET /static/jazzmin/plugins/bootstrap-show-modal/bootstrap-show-modal.min.js HTTP/1.1" 200 2756
+INFO 2025-07-10 18:02:24,993 basehttp 7216 1780 "GET /static/admin/img/icon-addlink.svg HTTP/1.1" 304 0
+INFO 2025-07-10 18:02:24,993 basehttp 7216 3952 "GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 304 0
+INFO 2025-07-10 18:02:24,995 basehttp 7216 20088 "GET /static/admin/img/icon-deletelink.svg HTTP/1.1" 200 392
+INFO 2025-07-10 18:02:24,995 basehttp 7216 18528 "GET /static/jazzmin/js/related-modal.js HTTP/1.1" 200 6258
+WARNING 2025-07-10 18:02:45,165 log 7216 2044 Unauthorized: /api/social/links/74/
+WARNING 2025-07-10 18:02:45,166 basehttp 7216 2044 "GET /api/social/links/74/ HTTP/1.1" 401 108
+WARNING 2025-07-10 18:02:56,019 log 7216 2044 Not Found: /api/social/links/71/
+WARNING 2025-07-10 18:02:56,019 basehttp 7216 2044 "GET /api/social/links/71/ HTTP/1.1" 404 56
+WARNING 2025-07-10 18:03:31,896 log 7216 2044 Not Found: /api/services/74/
+WARNING 2025-07-10 18:03:31,897 basehttp 7216 2044 "GET /api/services/74/ HTTP/1.1" 404 48
+WARNING 2025-07-10 18:03:37,196 log 7216 2044 Not Found: /api/services/71/
+WARNING 2025-07-10 18:03:37,196 basehttp 7216 2044 "GET /api/services/71/ HTTP/1.1" 404 48
+INFO 2025-07-10 18:03:54,702 basehttp 7216 2044 "POST /api/social/links/ HTTP/1.1" 200 81
+WARNING 2025-07-10 18:04:22,722 log 7216 2044 Not Found: /api/social/links/71/
+WARNING 2025-07-10 18:04:22,723 basehttp 7216 2044 "GET /api/social/links/71/ HTTP/1.1" 404 56

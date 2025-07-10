@@ -11,23 +11,42 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+import environ # Import django-environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Initialize django-environ
+env = environ.Env(
+    # Set casting and default values for your environment variables
+    DEBUG=(bool, False), # Default to False for safety if not explicitly set
+    SECRET_KEY=(str, 'INSECURE_DEVELOPMENT_KEY_FALLBACK_ONLY'), # Fallback, but should be in .env
+    ALLOWED_HOSTS=(list, []), # Default to empty list for safety
+    DATABASE_URL=(str, 'sqlite:///db.sqlite3'), # Default for SQLite if DATABASE_URL not provided
+    CORS_ALLOW_ALL_ORIGINS=(bool, False), # Default to False for safety
+    CORS_ALLOWED_ORIGINS=(list, []), # Default to empty list
+    ADMIN_URL=(str, 'admin/'), # Default admin URL
+    SIMPLE_JWT_ACCESS_TOKEN_LIFETIME_DAYS=(int, 30),
+    SIMPLE_JWT_REFRESH_TOKEN_LIFETIME_DAYS=(int, 365),
+    LOG_FILE_PATH=(str, os.path.join(BASE_DIR, 'logs', 'django_debug.log')),
+)
+
+# Take environment variables from .env file
+# This will load variables from the .env file at the project root
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-(_kijww=(-u08b-&jv#7vi35ghj1amjh^9-swh)dtbn$c_v9bf'
+SECRET_KEY = env('SECRET_KEY')
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = env('DEBUG')
 
-DEBUG = True
-
-ALLOWED_HOSTS = ['*']
-
-
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
 
 INSTALLED_APPS = [
@@ -49,13 +68,12 @@ INSTALLED_APPS = [
     'contact',
     'chats',
     'notifications',
-    'corsheaders',
-
+    'corsheaders', # Already there, good.
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # Keep this high up
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -64,15 +82,22 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS Settings
+CORS_ALLOW_ALL_ORIGINS = env('CORS_ALLOW_ALL_ORIGINS')
+# Only use CORS_ALLOWED_ORIGINS if CORS_ALLOW_ALL_ORIGINS is False
+if not CORS_ALLOW_ALL_ORIGINS:
+    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS')
+CORS_ALLOW_CREDENTIALS = True # Often needed for JWT authentication
 
-
+# CSRF_TRUSTED_ORIGINS: Important for cross-origin POST requests, especially from JS frontends
+# For development, you often add localhost/127.0.0.1
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
+    "http://localhost:8000",
     "http://127.0.0.1:8000",
-    "https://your-production-frontend.com",
+    # Add your Flutter Web dev server if it runs on a different port/domain:
+    # "http://localhost:5173", # Example for common frontend dev servers
 ]
-
+# Ensure you uncomment and update this for production with your actual frontend domains
 
 ROOT_URLCONF = 'ubc.urls'
 
@@ -83,6 +108,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug', # Add this for showing debug info in templates
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -94,26 +120,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'ubc.wsgi.application'
 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'OPTIONS': {
-#             'read_default_file': '/home/ebs15/Documents/EBS/venv/UBC/ubc/my.cnf',
-#         },
-#     }
-# }
+# Database
+# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ubc_db',
-        'USER': 'root',
-        'PASSWORD': 'Pass@123',
-        'HOST': 'localhost',
-        'PORT': '3306',
-    }
+    'default': env.db(), # Reads from DATABASE_URL env var
 }
-
 
 
 # Password validation
@@ -140,19 +152,24 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Set TIME_ZONE based on your location in Kozhikode, Kerala, India
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = True # Keep True if you want Django to handle timezone conversions
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [ BASE_DIR / "static" ] 
-STATIC_ROOT = BASE_DIR / "staticfiles" 
+STATICFILES_DIRS = [ BASE_DIR / "static" ]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -162,40 +179,76 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication', # Keep for browsable API/Admin
     ),
     # 'DEFAULT_PERMISSION_CLASSES': (
-    #     'rest_framework.permissions.IsAuthenticated',
+    #     'rest_framework.permissions.IsAuthenticated', # Default to requiring authentication
     # ),
     'EXCEPTION_HANDLER': 'accounts.exceptions.custom_api_exception_handler',
 }
 
 from datetime import timedelta
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=env.int('SIMPLE_JWT_ACCESS_TOKEN_LIFETIME_DAYS')),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=env.int('SIMPLE_JWT_REFRESH_TOKEN_LIFETIME_DAYS')),
     'AUTH_HEADER_TYPES': ('Bearer',),
+    'ROTATE_REFRESH_TOKENS': True, # Recommended
+    'BLACKLIST_AFTER_ROTATION': True, # Recommended
+    'UPDATE_LAST_LOGIN': True, # Keep track of user's last login
 }
 
 AUTH_USER_MODEL = 'accounts.User'
 
-
-
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",  # Dev only (not shared across processes)
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": "unique-signup-cache",
     }
 }
 
+# Add logging configuration for better debug and production monitoring
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO', # Log INFO and higher to file
+            'class': 'logging.FileHandler',
+            'filename': env('LOG_FILE_PATH'),
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'DEBUG' if DEBUG else 'INFO', # Log DEBUG to console in dev, INFO in prod
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'accounts': { # Example for your 'accounts' app
+            'handlers': ['file', 'console'],
+            'level': 'INFO' if not DEBUG else 'DEBUG', # More verbose in dev for app logs
+            'propagate': False,
+        },
+        # Add loggers for other apps as needed
+    },
+}
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-
-
-
-
-
-
+# JAZZMIN_SETTINGS (Keep these as they are, but paths like site_logo should be relative to STATIC_URL or MEDIA_URL if they are in your static/media folders)
 JAZZMIN_SETTINGS = {
     "site_title": "UBC Admin",
     "site_header": "UBC Admin",
@@ -210,7 +263,6 @@ JAZZMIN_SETTINGS = {
     "hide_apps": [],
     "hide_models": [],
     "order_with_respect_to": ["accounts", "category", "media_management", "social", "theme", "services", "contact", "chats", "notifications"],
-
     "icons": {
         "accounts": "fas fa-id-badge",
         "accounts.User": "fas fa-user-circle",
@@ -224,43 +276,28 @@ JAZZMIN_SETTINGS = {
         "social.SocialMediaPlatform": "fas fa-globe",
         "theme": "fas fa-fill-drip",
         "theme.Theme": "fas fa-brush",
-        "services": "fas fa-tools",                  
-        "services.Service": "fas fa-briefcase",      
-        "contact": "fas fa-address-book",           
+        "services": "fas fa-tools",
+        "services.Service": "fas fa-briefcase",
+        "contact": "fas fa-address-book",
         "contact.ContactMessage": "fas fa-envelope",
-        "chats": "fas fa-comments",                 
-        "chats.Message": "fas fa-comment-alt",      
-        "notifications": "fas fa-bell",              
-        "notifications.Notification": "fas fa-bell", 
+        "chats": "fas fa-comments",
+        "chats.Message": "fas fa-comment-alt",
+        "notifications": "fas fa-bell",
+        "notifications.Notification": "fas fa-bell",
     },
-
-    # "topmenu_links": [
-    #     {"name": "Dashboard",  "url": "/admin", "permissions": ["auth.view_user"]},
-    #     {"app": "accounts"},
-    #     {"app": "category"},
-    #     {"app": "media_management"},
-    #     {"app": "social"},
-    #     {"app": "theme"},
-    # ],
-
-    # "custom_links": {
-    #     "accounts": [{
-    #         "name": "Google",
-    #         "url": "https://google.com",
-    #         "icon": "fas fa-link",
-    #         "permissions": ["auth.view_user"]
-    #     }]
-    # },
-
-    "changeform_format": "horizontal_tabs",  # tabbed sections like Strapi
+    "changeform_format": "horizontal_tabs",
     "changeform_format_overrides": {
         "accounts.User": "horizontal_tabs",
         "category.Category": "collapsible",
     },
-
-    "related_modal_active": True,  # Show related (add/edit) as modals
-    # "theme": "darkly",  # Dark theme like Strapi
-    # "theme": "slate",
-    "show_ui_builder": False,  # Disable live builder in production
+    "related_modal_active": True,
+    "show_ui_builder": False,
 }
 
+# Optional: Custom Admin URL setup
+# Make sure your ubc/urls.py also uses this
+ADMIN_URL = env('ADMIN_URL')
+
+# Create the logs directory if it doesn't exist
+LOG_DIR = BASE_DIR / 'logs'
+LOG_DIR.mkdir(parents=True, exist_ok=True)
